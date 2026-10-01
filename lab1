@@ -1,0 +1,23 @@
+<?php
+    ini_set('display_errors', '1');
+    ini_set('display_startup_errors', '1');
+    //task 1.1
+    echo "task 1.1" . "<br>";
+    $x = 2;
+    $z = 1;
+    $mu = pow(atan(($x + $z) / ($x - $z)), 2) + pow(pow(abs($x), 2) + abs($z), 1 / 3) - sqrt(abs($x * $z)) + 0.9;
+    echo " result μ = " . $mu . "<br>";
+    //task 1.2
+    echo "task 1.2" . "<br>";
+    $a = -2; 
+    $b = 5;  
+    $result = abs($a + $b) <= (abs($a) + abs($b)) || ($a * $b) > 0;
+    var_dump($result);
+    echo "<br>";
+    //task 1.3
+    echo "task 1.3" . "<br>";
+    $m = 0.58;
+    $n = atan($m) - pow($m, 2);
+    $eps = sqrt(abs(pow($m, 3) - $n)) + tan($m * $n);
+    echo "result ε1 = $eps" . "<br>";
+?>
