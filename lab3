@@ -1,4 +1,7 @@
 <?php
+ini_set('display_errors', '1');
+ini_set('display_startup_errors', '1');
+error_reporting(E_ALL);
 class CssCategory {
     private $id;
     private $name;
@@ -63,18 +66,9 @@ class CssProperty {
         }
     }
 }
-
-class CssPropertyRepository {
-    private $properties = [];
-    private $nextId = 1;
-
-    public function create($name, $category, $description) {
-        $property = new CssProperty($this->nextId, $name, $category, $description);
-        $this->properties[] = $property;
-        $this->nextId++;
-        return $property; 
-    }
-
+abstract class BaseList{
+    protected $properties = [];
+    protected $nextId = 1;
     public function findAll() {
         return $this->properties;
     }
@@ -87,7 +81,6 @@ class CssPropertyRepository {
         }
         return null;
     }
-
     public function update($id, $newName, $newCategory, $newDescription) {
         $prop = $this->findById($id);
         if ($prop != null) {
@@ -109,22 +102,42 @@ class CssPropertyRepository {
         return false;
     }
 }
-
+class CssCategoryList extends Baselist{
+     public function create($name) {
+        $property = new CssCategory($this->nextId, $name);
+        $this->properties[] = $property;
+        $this->nextId++;
+        return $property; 
+    }
+}
+class CssExampleList extends Baselist{
+     public function create($code, $description) {
+        $property = new CssExample($this->nextId, $code, $description);
+        $this->properties[] = $property;
+        $this->nextId++;
+        return $property; 
+    }
+}
+class CssPropertyList extends Baselist{
+     public function create($name, $category, $description) {
+        $property = new CssProperty($this->nextId, $name, $category, $description);
+        $this->properties[] = $property;
+        $this->nextId++;
+        return $property; 
+    }
+}
 $catText = new CssCategory(1, "Стилі тексту");
 $catBox = new CssCategory(2, "Блочна модель");
 
-$repo = new CssPropertyRepository();
+$repo = new CssPropertyList();
 
 $prop1 = $repo->create("color", $catText, "Змінює колір тексту елемента.");
 $prop1->addExample(new CssExample("Колір за назвою", "color: red;"));
 $prop1->addExample(new CssExample("HEX-код", "color: #ff0000;"));
-
 $prop2 = $repo->create("margin", $catBox, "Задає зовнішні відступи елемента.");
 $prop2->addExample(new CssExample("Відступи з усіх боків", "margin: 15px;"));
-
 $prop3 = $repo->create("font-size", $catText, "Встановлює розмір шрифту.");
 $prop3->addExample(new CssExample("Розмір у пікселях", "font-size: 16px;"));
-
 $allProps = $repo->findAll();
 foreach ($allProps as $p) {
     $p->printInfo();
@@ -132,11 +145,12 @@ foreach ($allProps as $p) {
 echo "<hr>";
 $repo->update(2, "margin", $catBox, "Задає зовнішні відступи блоку.");
 $repo->findById(2)->printInfo();
-
+echo "<hr>";
 $repo->delete(2);
 
 $allPropsAfterDelete = $repo->findAll();
 foreach ($allPropsAfterDelete as $p) {
     $p->printInfo();
 }
+echo "<hr>";
 ?>
