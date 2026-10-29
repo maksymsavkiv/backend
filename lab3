@@ -1,0 +1,142 @@
+<?php
+class CssCategory {
+    private $id;
+    private $name;
+
+    public function __construct($id, $name) {
+        $this->id = $id;
+        $this->name = $name;
+    }
+
+    public function getId() { return $this->id; }
+    public function getName() { return $this->name; }
+}
+
+class CssExample {
+    private $description;
+    private $code;
+
+    public function __construct($description, $code) {
+        $this->description = $description;
+        $this->code = $code;
+    }
+
+    public function getDescription() { return $this->description; }
+    public function getCode() { return $this->code; }
+}
+
+class CssProperty {
+    private $id;
+    private $name;
+    private $category;
+    private $description;
+    private $examples = [];
+
+    public function __construct($id, $name, $category, $description) {
+        $this->id = $id;
+        $this->name = $name;
+        $this->category = $category;
+        $this->description = $description;
+    }
+
+    public function getId() { return $this->id; }
+    public function getName() { return $this->name; }
+    public function getCategory() { return $this->category; }
+    public function getDescription() { return $this->description; }
+    public function getExamples() { return $this->examples; }
+
+    public function setName($name) { $this->name = $name; }
+    public function setCategory($category) { $this->category = $category; }
+    public function setDescription($description) { $this->description = $description; }
+
+    public function addExample($example) {
+        $this->examples[] = $example;
+    }
+
+    public function printInfo() {
+        echo "<b>ID: {$this->id} | Властивість: {$this->name}</b><br>";
+        echo "Категорія: {$this->category->getName()}<br>";
+        echo "Опис: {$this->description}<br>";
+        echo "Приклади застосування:<br>";
+        foreach ($this->examples as $ex) {
+            echo " - {$ex->getDescription()}: <code>{$ex->getCode()}</code><br>";
+        }
+    }
+}
+
+class CssPropertyRepository {
+    private $properties = [];
+    private $nextId = 1;
+
+    public function create($name, $category, $description) {
+        $property = new CssProperty($this->nextId, $name, $category, $description);
+        $this->properties[] = $property;
+        $this->nextId++;
+        return $property; 
+    }
+
+    public function findAll() {
+        return $this->properties;
+    }
+
+    public function findById($id) {
+        foreach ($this->properties as $prop) {
+            if ($prop->getId() == $id) {
+                return $prop;
+            }
+        }
+        return null;
+    }
+
+    public function update($id, $newName, $newCategory, $newDescription) {
+        $prop = $this->findById($id);
+        if ($prop != null) {
+            $prop->setName($newName);
+            $prop->setCategory($newCategory);
+            $prop->setDescription($newDescription);
+            return true;
+        }
+        return false;
+    }
+
+    public function delete($id) {
+        foreach ($this->properties as $index => $prop) {
+            if ($prop->getId() == $id) {
+                array_splice($this->properties, $index, 1);
+                return true;
+            }
+        }
+        return false;
+    }
+}
+
+$catText = new CssCategory(1, "Стилі тексту");
+$catBox = new CssCategory(2, "Блочна модель");
+
+$repo = new CssPropertyRepository();
+
+$prop1 = $repo->create("color", $catText, "Змінює колір тексту елемента.");
+$prop1->addExample(new CssExample("Колір за назвою", "color: red;"));
+$prop1->addExample(new CssExample("HEX-код", "color: #ff0000;"));
+
+$prop2 = $repo->create("margin", $catBox, "Задає зовнішні відступи елемента.");
+$prop2->addExample(new CssExample("Відступи з усіх боків", "margin: 15px;"));
+
+$prop3 = $repo->create("font-size", $catText, "Встановлює розмір шрифту.");
+$prop3->addExample(new CssExample("Розмір у пікселях", "font-size: 16px;"));
+
+$allProps = $repo->findAll();
+foreach ($allProps as $p) {
+    $p->printInfo();
+}
+echo "<hr>";
+$repo->update(2, "margin", $catBox, "Задає зовнішні відступи блоку.");
+$repo->findById(2)->printInfo();
+
+$repo->delete(2);
+
+$allPropsAfterDelete = $repo->findAll();
+foreach ($allPropsAfterDelete as $p) {
+    $p->printInfo();
+}
+?>
