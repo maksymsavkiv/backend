@@ -129,7 +129,7 @@ $allProps = $repo->findAll();
 foreach ($allProps as $p) {
     $p->printInfo();
 }
-
+echo "<hr>";
 $repo->update(2, "margin", $catBox, "Задає зовнішні відступи блоку.");
 $repo->findById(2)->printInfo();
 
