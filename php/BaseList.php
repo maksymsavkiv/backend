@@ -42,7 +42,7 @@ abstract class BaseList {
         foreach ($this->dataArray as $item) {
             array_push($result, $item->getAsAssocArray());
         }
-        return json_encode($result, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+        return json_encode($result, JSON_UNESCAPED_UNICODE);
     }
 }
 ?>
