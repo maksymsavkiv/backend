@@ -213,32 +213,12 @@ function showActions(string $type, int $id): void
 {
     ?>
     <div class="actions">
-        <a href="index.php?edit=<?= e($type) ?>&amp;id=<?= $id ?>#edit">
-            Редагувати
-        </a>
-        <form
-            action="index.php"
-            method="post"
-            onsubmit="return confirm('Видалити цей запис?');"
-        >
-            <input
-                type="hidden"
-                name="type"
-                value="<?= e($type) ?>"
-            >
-            <input
-                type="hidden"
-                name="action"
-                value="delete"
-            >
-            <input
-                type="hidden"
-                name="id"
-                value="<?= $id ?>"
-            >
-            <button type="submit">
-                Видалити
-            </button>
+        <a href="index.php?edit=<?= e($type) ?>&amp;id=<?= $id ?>#edit">Редагувати</a>
+        <form action="index.php" method="post" onsubmit="return confirm('Видалити цей запис?');">
+            <input type="hidden" name="type" value="<?= e($type) ?>">
+            <input type="hidden" name="action" value="delete">
+            <input type="hidden" name="id"value="<?= $id ?>">
+            <button type="submit">Видалити</button>
         </form>
     </div>
     <?php
