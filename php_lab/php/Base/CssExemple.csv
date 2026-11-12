@@ -1,0 +1,5 @@
+description, code
+"Колір за назвою","color: red;"
+HEX-код,"color: #ff0000;"
+"Відступи з усіх боків","margin: 15px;"
+"Розмір у пікселях","font-size: 16px;"
