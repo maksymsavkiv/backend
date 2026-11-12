@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSS-довідник</title>
+    <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+    <h1>Довідник CSS</h1>
+    <p>Категорії, властивості та приклади CSS</p>
+    <p id="message" role="status" hidden></p>
+    <section>
+        <h2>Категорії</h2>
+        <form id="categories-form">
+            <label>Назва категорії
+                <input name="name" required maxlength="150">
+            </label>
+            <button type="submit">Додати категорію</button>
+            <button type="button" class="cancel" hidden>Скасувати</button>
+        </form>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Назва</th>
+                    <th>Дії</th>
+                </tr>
+            </thead>
+            <tbody id="categories-list"></tbody>
+        </table>
+    </section>
+    <section>
+        <h2>Властивості CSS</h2>
+        <form id="properties-form">
+            <label>Назва властивості
+                <input name="name" required maxlength="150">
+            </label>
+            <label>Категорія
+                <select name="category" required></select>
+            </label>
+            <label>Опис
+                <input name="description" rows="3" required></input>
+            </label>
+            <button type="submit">Додати властивість</button>
+            <button type="button" class="cancel" hidden>Скасувати</button>
+        </form>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Назва</th>
+                    <th>Категорія</th>
+                    <th>Опис</th>
+                    <th>Дії</th>
+                </tr>
+            </thead>
+            <tbody id="properties-list"></tbody>
+        </table>
+    </section>
+    <section>
+        <h2>Приклади CSS</h2>
+        <form id="examples-form" enctype="multipart/form-data">
+            <label>Опис
+                <input name="description" required>
+            </label>
+            <label>CSS-код
+                <input name="code" rows="3" required></input>
+            </label>
+            <label>Зображення
+                <input type="file" name="image" accept="image/jpeg,image/png,image/webp" required>
+            </label>
+            <button type="submit">Додати приклад</button>
+            <button type="button" class="cancel" hidden>Скасувати</button>
+        </form>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Опис</th>
+                    <th>Код</th>
+                    <th>Зображення</th>
+                    <th>Дії</th>
+                </tr>
+            </thead>
+            <tbody id="examples-list"></tbody>
+        </table>
+    </section>
+    <script>
+        const endpoints = {categories: 'api/categories-json.php', properties: 'api/property-json.php', examples: 'api/example-json.php'};
+        const labels = {categories: 'категорію', properties: 'властивість', examples: 'приклад'};
+        const records = { categories: [], properties: [], examples: [] };
+        const editing = { categories: null, properties: null, examples: null };
+        const forms = {};
+        let busy = false;
+        function message(text, error = false) {
+            const element = document.getElementById('message');
+            element.textContent = text;
+            element.className = error ? 'error' : 'notice';
+            element.hidden = false;
+        }
+        async function request(url, options = {}) {
+            const response = await fetch(url, options);
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data.error || 'Помилка запиту.');
+            }
+            return data;
+        }
+        function sendJSON(type, data) {
+            return request(endpoints[type], {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+        }
+        function uploadImage(id, file) {
+            const data = new FormData();
+            data.append('id', id);
+            data.append('image', file);
+            return request('api/upload.php', { method: 'POST', body: data });
+        }
+        function setBusy(value) {
+            busy = value;
+            document.querySelectorAll('button').forEach(button => {
+                button.disabled = value;
+            });
+        }
+        function resetForm(type) {
+            const form = forms[type];
+            editing[type] = null;
+            form.reset();
+            form.querySelector('[type="submit"]').textContent = 'Додати ' + labels[type];
+            form.querySelector('.cancel').hidden = true;
+            if (type === 'examples') form.elements.image.required = true;
+        }
+        function editRecord(type, item) {
+            const form = forms[type];
+            editing[type] = item.id;
+            if (type !== 'examples') form.elements.name.value = item.name;
+            if (type !== 'categories') form.elements.description.value = item.description;
+            if (type === 'properties') form.elements.category.value = item.categoryId;
+            if (type === 'examples') {
+                form.elements.code.value = item.code;
+                form.elements.image.value = '';
+                form.elements.image.required = false;
+            }
+            form.querySelector('[type="submit"]').textContent = 'Зберегти зміни';
+            form.querySelector('.cancel').hidden = false;
+            form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        async function deleteRecord(type, id) {
+            if (busy || !confirm('Видалити цей запис?')) return;
+            setBusy(true);
+            try {
+                await sendJSON(type, { action: 'delete', id: id });
+                if (editing[type] === id) resetForm(type);
+                await loadRecords();
+                message('Запис видалено.');
+            } catch (error) {
+                message(error.message, true);
+            } finally {
+                setBusy(false);
+            }
+        }
+        function addCell(row, value) {
+            const cell = row.insertCell();
+            cell.textContent = value;
+            return cell;
+        }
+        function addActions(row, type, item) {
+            const cell = row.insertCell();
+            const actions = document.createElement('div');
+            actions.className = 'actions';
+            const edit = document.createElement('button');
+            edit.textContent = 'Редагувати';
+            edit.className = 'edit-button';
+            edit.onclick = () => editRecord(type, item);
+            const remove = document.createElement('button');
+            remove.textContent = 'Видалити';
+            remove.onclick = () => deleteRecord(type, item.id);
+            actions.append(edit, remove);
+            cell.append(actions);
+        }
+        function renderRecords(type) {
+            const body = document.getElementById(type + '-list');
+            body.replaceChildren();
+            for (const item of records[type]) {
+                const row = body.insertRow();
+                addCell(row, item.id);
+                if (type !== 'examples') addCell(row, item.name);
+                if (type === 'properties') {
+                    const category = records.categories.find(c => Number(c.id) === Number(item.categoryId));
+                    addCell(row, category ? category.name : 'Невідома');
+                }
+                if (type !== 'categories') addCell(row, item.description);
+                if (type === 'examples') {
+                    addCell(row, item.code);
+                    const cell = row.insertCell();
+                    if (item.image && /^uploads\/[a-f0-9]+\.(jpg|png|webp)$/.test(item.image)) {
+                        const image = document.createElement('img');
+                        image.src = item.image;
+                        image.alt = item.description;
+                        cell.append(image);
+                    } else {
+                        cell.textContent = '—';
+                    }
+                }
+                addActions(row, type, item);
+            }
+        }
+        async function loadRecords() {
+            const types = Object.keys(endpoints);
+            const lists = await Promise.all(types.map(type => request(endpoints[type])));
+            types.forEach((type, index) => { records[type] = lists[index]; });
+            const select = forms.properties.elements.category;
+            const previous = select.value;
+            select.replaceChildren(new Option('Оберіть категорію', ''));
+            for (const category of records.categories) {
+                select.add(new Option(category.name, category.id));
+            }
+            select.value = previous;
+            types.forEach(renderRecords);
+        }
+        async function saveRecord(event, type) {
+            event.preventDefault();
+            if (busy) return;
+            const form = forms[type];
+            const data = { action: editing[type] === null ? 'add' : 'update' };
+            if (editing[type] !== null) data.id = editing[type];
+            if (type !== 'examples') data.name = form.elements.name.value;
+            if (type !== 'categories') data.description = form.elements.description.value;
+            if (type === 'properties') data.category = Number(form.elements.category.value);
+            if (type === 'examples') data.code = form.elements.code.value;
+            const file = type === 'examples' ? form.elements.image.files[0] : null;
+            setBusy(true);
+            try {
+                const result = await sendJSON(type, data);
+                if (file) {
+                    try {
+                        await uploadImage(result.id, file);
+                    } catch (error) {
+                        editing[type] = result.id;
+                        form.elements.image.required = false;
+                        form.querySelector('[type="submit"]').textContent = 'Зберегти зміни';
+                        form.querySelector('.cancel').hidden = false;
+                        await loadRecords();
+                        message('Запис збережено, але файл не завантажено: ' + error.message + ' Повторіть збереження для цього запису.', true);
+                        return;
+                    }
+                }
+                resetForm(type);
+                await loadRecords();
+                message('Запис успішно збережено.');
+            } catch (error) {
+                message(error.message, true);
+            } finally {
+                setBusy(false);
+            }
+        }
+        for (const type of Object.keys(endpoints)) {
+            const form = document.getElementById(type + '-form');
+            forms[type] = form;
+            form.addEventListener('submit', event => saveRecord(event, type));
+            form.querySelector('.cancel').onclick = () => resetForm(type);
+        }
+        loadRecords().catch(error => message(error.message, true));
+    </script>
+</body>
+</html>

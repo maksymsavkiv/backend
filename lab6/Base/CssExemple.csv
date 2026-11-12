@@ -1,0 +1,5 @@
+id,description,code,image
+1,"Колір за назвою","color: red;",
+2,HEX-код,"color: #ff0000;",
+3,"Відступи з усіх боків","margin: 15px;",
+4,"Розмір у пікселях","font-size: 16px;",
