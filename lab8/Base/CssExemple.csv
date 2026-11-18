@@ -1,0 +1,6 @@
+id,description,code,image
+1,"Колір за назвою","color: red;",
+2,HEX-код,"color: #ff0000;",
+3,"Відступи з усіх боків","margin: 15px;",
+4,"Розмір у пікселях","font-size: 16px;",
+6,"Відступи нв 10px зверху і знизу, 15px по бокам","padding: 10px 15;",uploads/41c2330cb0253e3e81c85de014d4afa8.png
